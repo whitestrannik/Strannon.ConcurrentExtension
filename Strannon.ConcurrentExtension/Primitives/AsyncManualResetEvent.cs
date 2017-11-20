@@ -4,12 +4,12 @@ using System.Threading.Tasks;
 
 namespace Strannon.ConcurrentExtension
 {
-    public sealed class ManualResetEventAsync
+    public sealed class AsyncManualResetEvent
     {
         private readonly TimeSpan _eternityTimeSpan;
         private volatile TaskCompletionSource<object> _tcs;
 
-        public ManualResetEventAsync()
+        public AsyncManualResetEvent()
         {
             _eternityTimeSpan = TimeSpan.FromMilliseconds(-1);
             _tcs = TaskHelper.CreateTaskCompletitionSource();
@@ -20,14 +20,29 @@ namespace Strannon.ConcurrentExtension
             _tcs.Task.Wait();
         }
 
+        public void Wait(TimeSpan timeout)
+        {
+            _tcs.Task.Wait(timeout);
+        }
+
+        public void Wait(CancellationToken token)
+        {
+            _tcs.Task.Wait(token);
+        }
+
+        public void Wait(TimeSpan timeout, CancellationToken token)
+        {
+            _tcs.Task.Wait((int)timeout.TotalMilliseconds, token);
+        }
+
         public Task WaitAsync()
         {
             return WaitAsync(_eternityTimeSpan, CancellationToken.None);
         }
 
-        public Task WaitAsync(TimeSpan timeOut)
+        public Task WaitAsync(TimeSpan timeout)
         {
-            return WaitAsync(timeOut, CancellationToken.None);
+            return WaitAsync(timeout, CancellationToken.None);
         }
 
         public Task WaitAsync(CancellationToken token)

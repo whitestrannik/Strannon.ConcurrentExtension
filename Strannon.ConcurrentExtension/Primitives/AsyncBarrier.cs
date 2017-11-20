@@ -4,20 +4,20 @@ using System.Threading.Tasks;
 
 namespace Strannon.ConcurrentExtension.Primitives
 {
-    public sealed class BarrierAsync
+    public sealed class AsyncBarrier
     {
         private readonly int _initialClientsCount;
         private int _clientsCount;
         private TaskCompletionSource<object> _tcs;
 
-        public BarrierAsync(int clientsCount)
+        public AsyncBarrier(int clientsCount)
         {
             if (clientsCount <= 0)
             {
                 throw new ArgumentOutOfRangeException("clientsCount can not be less or equal to zero.");
             }
 
-            _initialClientsCount = clientsCount;
+            _initialClientsCount = _clientsCount = clientsCount;
             _tcs = TaskHelper.CreateTaskCompletitionSource();
         }
 

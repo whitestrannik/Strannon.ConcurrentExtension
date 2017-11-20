@@ -11,7 +11,7 @@ namespace Strannon.ConcurrentExtension.Test
         [TestMethod]
         public void WhenEventIsSet_ItShouldNotMakeClientsWaitedAsync()
         {
-            var sut = new ManualResetEventAsync();
+            var sut = new AsyncManualResetEvent();
 
             sut.Set();
 
@@ -22,7 +22,7 @@ namespace Strannon.ConcurrentExtension.Test
         [TestMethod]
         public void WhenEventIsReset_ItShouldMakeClientsWaitedAsyncWithCancel()
         {
-            var sut = new ManualResetEventAsync();
+            var sut = new AsyncManualResetEvent();
 
             sut.Reset();
             var ct = new CancellationTokenSource();
@@ -38,7 +38,7 @@ namespace Strannon.ConcurrentExtension.Test
         [TestMethod]
         public void WhenEventIsDefault_ItShouldMakeClientsWaitedAsync()
         {
-            var sut = new ManualResetEventAsync();
+            var sut = new AsyncManualResetEvent();
 
             ConcurrentAssert.EnsureThatTaskIsNeverCompleted(sut.WaitAsync());
             ConcurrentAssert.EnsureThatTaskIsNeverCompleted(sut.WaitAsync());
@@ -47,7 +47,7 @@ namespace Strannon.ConcurrentExtension.Test
         [TestMethod]
         public void WhenEventIsSetManyTimes_ItShouldNotMakeClientsWaitedAsync()
         {
-            var sut = new ManualResetEventAsync();
+            var sut = new AsyncManualResetEvent();
 
             sut.Set();
             sut.Set();
@@ -60,7 +60,7 @@ namespace Strannon.ConcurrentExtension.Test
         [TestMethod]
         public void WhenEventIsReset_ItShouldMakeClientsWaitedAsync()
         {
-            var sut = new ManualResetEventAsync();
+            var sut = new AsyncManualResetEvent();
 
             sut.Set();
             sut.Reset();
@@ -72,7 +72,7 @@ namespace Strannon.ConcurrentExtension.Test
         [TestMethod]
         public void WhenEventIsSet_ItShouldNotMakeClientsWaited()
         {
-            var sut = new ManualResetEventAsync();
+            var sut = new AsyncManualResetEvent();
 
             sut.Set();
 
@@ -83,7 +83,7 @@ namespace Strannon.ConcurrentExtension.Test
         [TestMethod]
         public void WhenEventIsDefault_ItShouldMakeClientsWaited()
         {
-            var sut = new ManualResetEventAsync();
+            var sut = new AsyncManualResetEvent();
 
             ConcurrentAssert.EnsureThatActionIsNeverCompleted(sut.Wait);
             ConcurrentAssert.EnsureThatActionIsNeverCompleted(sut.Wait);
@@ -92,7 +92,7 @@ namespace Strannon.ConcurrentExtension.Test
         [TestMethod]
         public void WhenEventIsSetManyTimes_ItShouldMakeClientsWaited()
         {
-            var sut = new ManualResetEventAsync();
+            var sut = new AsyncManualResetEvent();
 
             sut.Set();
             sut.Set();
@@ -105,7 +105,7 @@ namespace Strannon.ConcurrentExtension.Test
         [TestMethod]
         public void WhenEventIsReset_ItShouldMakeClientsWaited()
         {
-            var sut = new ManualResetEventAsync();
+            var sut = new AsyncManualResetEvent();
 
             sut.Set();
             sut.Reset();
