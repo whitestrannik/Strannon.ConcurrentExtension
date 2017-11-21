@@ -7,7 +7,7 @@ namespace Strannon.ConcurrentTestExtension
     {
         public static void EnsureThatTaskIsNeverCompleted(Task task)
         {
-            EnsureThatTaskNeverComplete(task, TimeSpan.FromMilliseconds(500));
+            EnsureThatTaskNeverComplete(task, TimeSpan.FromMilliseconds(1000));
         }
 
         public static void EnsureThatTaskNeverComplete(Task task, TimeSpan timeSpan)
@@ -22,7 +22,7 @@ namespace Strannon.ConcurrentTestExtension
 
         public static void EnsureThatActionIsNeverCompleted(Action action)
         {
-            EnsureThatActionIsNeverCompleted(action, TimeSpan.FromMilliseconds(500));
+            EnsureThatActionIsNeverCompleted(action, TimeSpan.FromMilliseconds(1000));
         }
 
         public static void EnsureThatActionIsNeverCompleted(Action action, TimeSpan timeSpan)
@@ -38,7 +38,7 @@ namespace Strannon.ConcurrentTestExtension
 
         public static void EnsureThatTaskIsCompleted(Task task)
         {
-            EnsureThatTaskComplete(task, TimeSpan.FromMilliseconds(500));
+            EnsureThatTaskComplete(task, TimeSpan.FromMilliseconds(1000));
         }
 
         public static void EnsureThatTaskComplete(Task task, TimeSpan timeSpan)
@@ -53,7 +53,7 @@ namespace Strannon.ConcurrentTestExtension
 
         public static void EnsureThatActionIsCompleted(Action action)
         {
-            EnsureThatActionIsCompleted(action, TimeSpan.FromMilliseconds(500));
+            EnsureThatActionIsCompleted(action, TimeSpan.FromMilliseconds(1000));
         }
 
         public static void EnsureThatActionIsCompleted(Action action, TimeSpan timeSpan)

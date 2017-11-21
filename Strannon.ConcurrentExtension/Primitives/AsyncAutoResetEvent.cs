@@ -21,21 +21,22 @@ namespace Strannon.ConcurrentExtension.Primitives
 
         public void Wait()
         {
-            TaskCompletionSource<object> tcs = null;
+            WaitAsync().Wait();
+        }
 
-            lock (_lock)
-            {
-                if (_isSignalState)
-                {
-                    _isSignalState = false;
-                    return;
-                }
+        public void Wait(TimeSpan timeout)
+        {
+            WaitAsync(timeout).Wait();
+        }
 
-                tcs = TaskHelper.CreateTaskCompletitionSource();
-                _waitingClientsQueue.Enqueue(tcs);
-            }
+        public void Wait(CancellationToken token)
+        {
+            WaitAsync(token).Wait();
+        }
 
-            tcs.Task.Wait();
+        public void Wait(TimeSpan timeout, CancellationToken token)
+        {
+            WaitAsync(timeout, token).Wait();
         }
 
         public Task WaitAsync()
@@ -53,35 +54,22 @@ namespace Strannon.ConcurrentExtension.Primitives
             return WaitAsync(_eternityTimeSpan, token);
         }
 
-        public async Task WaitAsync(TimeSpan timeOut, CancellationToken token)
+        public Task WaitAsync(TimeSpan timeOut, CancellationToken token)
         {
             TaskCompletionSource<object> tcs = null;
-            bool isSignalState;
 
             lock (_lock)
             {
-                isSignalState = _isSignalState;
                 if (_isSignalState)
                 {
                     _isSignalState = false;
+                    return Task.CompletedTask;
                 }
                 else
                 {
                     tcs = TaskHelper.CreateTaskCompletitionSourceWithAsyncContinuation();
                     _waitingClientsQueue.Enqueue(tcs);
-                }
-            }
-
-            if (isSignalState)
-            {
-                await Task.CompletedTask;
-            }
-            else
-            {
-                // leave the cancelled tcs in queue
-                using (token.Register(() => tcs.TrySetCanceled()))
-                {
-                    await tcs.Task.WithTimeout(timeOut);
+                    return tcs.WaitWithTimeoutAndCancelAsync(timeOut, token);
                 }
             }
         }
@@ -95,13 +83,15 @@ namespace Strannon.ConcurrentExtension.Primitives
                 if (!_isSignalState)
                 {
                     tcs = GetWaitingClientFromQueue();
-                    _isSignalState = true;
+                    if (tcs == null)
+                    {
+                        _isSignalState = true;
+                    }
+                    else
+                    {
+                        tcs.TrySetResult(null);
+                    }
                 }
-            }
-
-            if (tcs != null)
-            {
-                tcs.TrySetResult(null);
             }
         }
 

@@ -84,7 +84,7 @@ namespace Strannon.ConcurrentExtension.Primitives
             {
                 using (token.Register(() => tcs.TrySetCanceled()))
                 {
-                    await tcs.Task.WithTimeout(timeOut);
+                    await tcs.Task.WaitWithTimeoutAsync(timeOut);
                 }
             }
         }

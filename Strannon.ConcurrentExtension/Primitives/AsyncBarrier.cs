@@ -7,8 +7,9 @@ namespace Strannon.ConcurrentExtension.Primitives
     public sealed class AsyncBarrier
     {
         private readonly int _initialClientsCount;
-        private int _clientsCount;
-        private TaskCompletionSource<object> _tcs;
+        private volatile int _clientsCount;
+        private volatile TaskCompletionSource<object> _tcs;
+        private readonly TimeSpan _eternityTimeSpan;
 
         public AsyncBarrier(int clientsCount)
         {
@@ -19,24 +20,50 @@ namespace Strannon.ConcurrentExtension.Primitives
 
             _initialClientsCount = _clientsCount = clientsCount;
             _tcs = TaskHelper.CreateTaskCompletitionSource();
+            _eternityTimeSpan = TimeSpan.FromMilliseconds(-1);
         }
 
-        public Task SignalAndWait()
+        public Task SignalAndWaitAsync()
+        {
+            return SignalAndWaitAsync(_eternityTimeSpan, CancellationToken.None);
+        }
+
+        public Task SignalAndWaitAsync(TimeSpan timeout)
+        {
+            return SignalAndWaitAsync(timeout, CancellationToken.None);
+        }
+
+        public Task SignalAndWaitAsync(CancellationToken token)
+        {
+            return SignalAndWaitAsync(_eternityTimeSpan, token);
+        }
+
+        public async Task SignalAndWaitAsync(TimeSpan timeout, CancellationToken token)
         {
             var tcs = _tcs;
             var count = Interlocked.Decrement(ref _clientsCount);
-            if (count == 0)
-            {
-                _clientsCount = _initialClientsCount;
-                tcs.SetResult(null);
-                _tcs = TaskHelper.CreateTaskCompletitionSource();
-            }
-            else if (count < 0)
+
+            if (count < 0)
             {
                 throw new InvalidOperationException("Can not signaled if counter is already less then zero.");
             }
+            else if (count == 0)
+            {
+                tcs.SetResult(null);
+                _tcs = TaskHelper.CreateTaskCompletitionSourceWithAsyncContinuation();
+                _clientsCount = _initialClientsCount;
+                await tcs.Task;
+            }
+            else
+            {
+                var cancellableTcs = TaskHelper.CreateTaskCompletitionSourceWithAsyncContinuation();
 
-            return tcs.Task;
+                tcs.Task.ContinueWith(t =>cancellableTcs.TrySetResult(null));
+                using (token.Register(() => cancellableTcs.TrySetCanceled()))
+                {
+                    await cancellableTcs.Task.WaitWithTimeoutAsync(timeout);
+                }
+            }
         }
     }
 }

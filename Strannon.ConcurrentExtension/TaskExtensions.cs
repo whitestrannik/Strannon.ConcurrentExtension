@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Strannon.ConcurrentExtension
 {
     public static class TaskExtensions
     {
-        public static async Task WithTimeout(this Task task, TimeSpan timeout)
+        public static async Task WaitWithTimeoutAsync(this Task task, TimeSpan timeout)
         {
             var firstCompletedTask = await Task.WhenAny(task, Task.Delay(timeout)).ConfigureAwait(false);
 
@@ -15,6 +16,24 @@ namespace Strannon.ConcurrentExtension
             }
 
             await task.ConfigureAwait(false);
+        }
+
+        public static async Task WaitWithTimeoutAndCancelAsync<T>(this TaskCompletionSource<T> tcs, TimeSpan timeout, CancellationToken token)
+        {
+            using (token.Register(() => tcs.TrySetCanceled()))
+            {
+                await tcs.Task.WaitWithTimeoutAsync(timeout);
+            }
+        }
+
+        public static void WaitAndUnwrapException(this Task task)
+        {
+            task.GetAwaiter().GetResult();
+        }
+
+        public static TResult WaitAndUnwrapException<TResult>(this Task<TResult> task)
+        {
+           return task.GetAwaiter().GetResult();
         }
     }
 }

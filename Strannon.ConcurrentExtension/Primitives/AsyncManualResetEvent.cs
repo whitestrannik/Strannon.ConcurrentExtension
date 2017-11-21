@@ -12,27 +12,27 @@ namespace Strannon.ConcurrentExtension
         public AsyncManualResetEvent()
         {
             _eternityTimeSpan = TimeSpan.FromMilliseconds(-1);
-            _tcs = TaskHelper.CreateTaskCompletitionSource();
+            _tcs = TaskHelper.CreateTaskCompletitionSourceWithAsyncContinuation();
         }
 
         public void Wait()
         {
-            _tcs.Task.Wait();
+            WaitAsync().Wait();
         }
 
         public void Wait(TimeSpan timeout)
         {
-            _tcs.Task.Wait(timeout);
+            WaitAsync(timeout).Wait();
         }
 
         public void Wait(CancellationToken token)
         {
-            _tcs.Task.Wait(token);
+            WaitAsync(token).Wait();
         }
 
         public void Wait(TimeSpan timeout, CancellationToken token)
         {
-            _tcs.Task.Wait((int)timeout.TotalMilliseconds, token);
+            WaitAsync(timeout, token).Wait();
         }
 
         public Task WaitAsync()
@@ -50,15 +50,12 @@ namespace Strannon.ConcurrentExtension
             return WaitAsync(_eternityTimeSpan, token);
         }
 
-        public async Task WaitAsync(TimeSpan timeOut, CancellationToken token)
+        public Task WaitAsync(TimeSpan timeOut, CancellationToken token)
         {
-            var tcs = TaskHelper.CreateTaskCompletitionSource();
+            var tcs = TaskHelper.CreateTaskCompletitionSourceWithAsyncContinuation();
             _tcs.Task.ContinueWith(t => tcs.TrySetResult(null));
 
-            using (token.Register(() => tcs.TrySetCanceled()))
-            {
-                await tcs.Task.WithTimeout(timeOut);
-            }
+            return tcs.WaitWithTimeoutAndCancelAsync(timeOut, token);
         }
 
         public void Set()
@@ -70,7 +67,7 @@ namespace Strannon.ConcurrentExtension
         {
             var tcs = _tcs;
 
-            while (tcs.Task.IsCompleted && Interlocked.CompareExchange(ref _tcs, TaskHelper.CreateTaskCompletitionSource(), tcs) != tcs)
+            while (tcs.Task.IsCompleted && Interlocked.CompareExchange(ref _tcs, TaskHelper.CreateTaskCompletitionSourceWithAsyncContinuation(), tcs) != tcs)
             {
                 tcs = _tcs;
             }
