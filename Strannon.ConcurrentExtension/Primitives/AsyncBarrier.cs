@@ -38,7 +38,7 @@ namespace Strannon.ConcurrentExtension.Primitives
             return SignalAndWaitAsync(_eternityTimeSpan, token);
         }
 
-        public async Task SignalAndWaitAsync(TimeSpan timeout, CancellationToken token)
+        public Task SignalAndWaitAsync(TimeSpan timeout, CancellationToken token)
         {
             var tcs = _tcs;
             var count = Interlocked.Decrement(ref _clientsCount);
@@ -49,20 +49,16 @@ namespace Strannon.ConcurrentExtension.Primitives
             }
             else if (count == 0)
             {
-                tcs.SetResult(null);
                 _tcs = TaskHelper.CreateTaskCompletitionSourceWithAsyncContinuation();
                 _clientsCount = _initialClientsCount;
-                await tcs.Task;
+                tcs.SetResult(null);
+                return tcs.Task;
             }
             else
             {
                 var cancellableTcs = TaskHelper.CreateTaskCompletitionSourceWithAsyncContinuation();
-
                 tcs.Task.ContinueWith(t =>cancellableTcs.TrySetResult(null));
-                using (token.Register(() => cancellableTcs.TrySetCanceled()))
-                {
-                    await cancellableTcs.Task.WaitWithTimeoutAsync(timeout);
-                }
+                return cancellableTcs.WaitWithTimeoutAndCancelAsync(timeout, token);
             }
         }
     }
