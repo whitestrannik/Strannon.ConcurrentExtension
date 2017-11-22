@@ -7,10 +7,10 @@ namespace Strannon.ConcurrentTestExtension
     {
         public static void EnsureThatTaskIsNeverCompleted(Task task)
         {
-            EnsureThatTaskNeverComplete(task, TimeSpan.FromMilliseconds(1000));
+            EnsureThatTaskIsNotCompleteIn(task, TimeSpan.FromMilliseconds(1000));
         }
 
-        public static void EnsureThatTaskNeverComplete(Task task, TimeSpan timeSpan)
+        public static void EnsureThatTaskIsNotCompleteIn(Task task, TimeSpan timeSpan)
         {
             var firstTask = Task.WhenAny(task, Task.Delay(timeSpan)).Result;
 

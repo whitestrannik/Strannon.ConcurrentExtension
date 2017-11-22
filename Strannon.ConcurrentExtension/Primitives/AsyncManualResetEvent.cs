@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Strannon.ConcurrentExtension
+namespace Strannon.ConcurrentExtension.Primitives
 {
     public sealed class AsyncManualResetEvent
     {
@@ -17,22 +17,22 @@ namespace Strannon.ConcurrentExtension
 
         public void Wait()
         {
-            WaitAsync().Wait();
+            WaitAsync().WaitAndUnwrapException();
         }
 
         public void Wait(TimeSpan timeout)
         {
-            WaitAsync(timeout).Wait();
+            WaitAsync(timeout).WaitAndUnwrapException();
         }
 
         public void Wait(CancellationToken token)
         {
-            WaitAsync(token).Wait();
+            WaitAsync(token).WaitAndUnwrapException();
         }
 
         public void Wait(TimeSpan timeout, CancellationToken token)
         {
-            WaitAsync(timeout, token).Wait();
+            WaitAsync(timeout, token).WaitAndUnwrapException();
         }
 
         public Task WaitAsync()

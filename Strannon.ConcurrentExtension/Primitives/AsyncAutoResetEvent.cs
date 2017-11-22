@@ -21,22 +21,22 @@ namespace Strannon.ConcurrentExtension.Primitives
 
         public void Wait()
         {
-            WaitAsync().Wait();
+            WaitAsync().WaitAndUnwrapException();
         }
 
         public void Wait(TimeSpan timeout)
         {
-            WaitAsync(timeout).Wait();
+            WaitAsync(timeout).WaitAndUnwrapException();
         }
 
         public void Wait(CancellationToken token)
         {
-            WaitAsync(token).Wait();
+            WaitAsync(token).WaitAndUnwrapException();
         }
 
         public void Wait(TimeSpan timeout, CancellationToken token)
         {
-            WaitAsync(timeout, token).Wait();
+            WaitAsync(timeout, token).WaitAndUnwrapException();
         }
 
         public Task WaitAsync()
@@ -95,7 +95,15 @@ namespace Strannon.ConcurrentExtension.Primitives
             }
         }
 
-        private TaskCompletionSource<object> GetWaitingClientFromQueue()
+        public void Reset()
+        {
+            lock (_lock)
+            {
+                _isSignalState = false;
+            }
+        }
+
+            private TaskCompletionSource<object> GetWaitingClientFromQueue()
         {
             TaskCompletionSource<object> tcs = null;
 
