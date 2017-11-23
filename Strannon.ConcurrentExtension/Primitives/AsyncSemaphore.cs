@@ -10,7 +10,7 @@ namespace Strannon.ConcurrentExtension.Primitives
         private readonly int _maxClientsCount;
         private readonly TimeSpan _eternityTimeSpan;
         private readonly object _lock;
-        private readonly Queue<TaskCompletionSource<object>> _waitedClients;
+        private readonly Queue<TaskCompletionSource<object>> _waitingClientsQueue;
         private int _clientsCount;
 
         public AsyncSemaphore(int maxClientsCount)
@@ -24,27 +24,27 @@ namespace Strannon.ConcurrentExtension.Primitives
             _maxClientsCount = maxClientsCount;
             _clientsCount = 0;
             _lock = new object();
-            _waitedClients = new Queue<TaskCompletionSource<object>>();
+            _waitingClientsQueue = new Queue<TaskCompletionSource<object>>();
         }
 
         public void Wait()
         {
-            var tcs = TaskHelper.CreateTaskCompletitionSource();
+            WaitAsync().WaitAndUnwrapException();
+        }
 
-            lock (_lock)
-            {
-                _clientsCount++;
-                if (_clientsCount > _maxClientsCount)
-                {
-                    _waitedClients.Enqueue(tcs);
-                }
-                else
-                {
-                    return;
-                }
-            }
+        public void Wait(TimeSpan timeout)
+        {
+            WaitAsync(timeout).WaitAndUnwrapException();
+        }
 
-            tcs.Task.Wait();
+        public void Wait(CancellationToken token)
+        {
+            WaitAsync(token).WaitAndUnwrapException();
+        }
+
+        public void Wait(TimeSpan timeout, CancellationToken token)
+        {
+            WaitAsync(timeout, token).WaitAndUnwrapException();
         }
 
         public Task WaitAsync()
@@ -62,29 +62,20 @@ namespace Strannon.ConcurrentExtension.Primitives
             return WaitAsync(_eternityTimeSpan, token);
         }
 
-        public async Task WaitAsync(TimeSpan timeOut, CancellationToken token)
+        public Task WaitAsync(TimeSpan timeout, CancellationToken token)
         {
-            var count = 0;
-            var tcs = TaskHelper.CreateTaskCompletitionSource();
-
             lock (_lock)
             {
-                count = ++_clientsCount;
-                if (count > _maxClientsCount)
+                _clientsCount++;
+                if (_clientsCount > _maxClientsCount)
                 {
-                    _waitedClients.Enqueue(tcs);
+                    var tcs = TaskHelper.CreateTaskCompletitionSource();
+                    _waitingClientsQueue.Enqueue(tcs);
+                    return tcs.WaitWithTimeoutAndCancelAsync(timeout, token);
                 }
-            }
-
-            if (count > _maxClientsCount)
-            {
-                await Task.CompletedTask;
-            }
-            else
-            {
-                using (token.Register(() => tcs.TrySetCanceled()))
+                else
                 {
-                    await tcs.Task.WaitWithTimeoutAsync(timeOut);
+                    return Task.CompletedTask;
                 }
             }
         }
@@ -99,11 +90,27 @@ namespace Strannon.ConcurrentExtension.Primitives
                     throw new InvalidOperationException();
                 }
 
-                if (_waitedClients.Count > 0)
+                var waitingClient = GetWaitingClientFromQueue();
+                if (waitingClient != null)
                 {
-                    _waitedClients.Dequeue().SetResult(null);
+                    waitingClient.SetResult(null);
                 }
             }
+        }
+
+        private TaskCompletionSource<object> GetWaitingClientFromQueue()
+        {
+            TaskCompletionSource<object> tcs = null;
+
+            while (_waitingClientsQueue.TryDequeue(out tcs))
+            {
+                if (!tcs.Task.IsCompleted)
+                {
+                    return tcs;
+                }
+            }
+
+            return null;
         }
     }
 }

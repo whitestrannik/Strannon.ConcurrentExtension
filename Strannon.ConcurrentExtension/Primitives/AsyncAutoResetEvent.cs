@@ -103,7 +103,7 @@ namespace Strannon.ConcurrentExtension.Primitives
             }
         }
 
-            private TaskCompletionSource<object> GetWaitingClientFromQueue()
+        private TaskCompletionSource<object> GetWaitingClientFromQueue()
         {
             TaskCompletionSource<object> tcs = null;
 

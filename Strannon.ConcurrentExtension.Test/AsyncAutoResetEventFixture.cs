@@ -91,7 +91,7 @@ namespace Strannon.ConcurrentExtension.Test
             var ct = new CancellationTokenSource();
             var task = sut.WaitAsync(TimeSpan.FromMilliseconds(1000), ct.Token);
 
-            ConcurrentAssert.EnsureThatTaskIsNotCompleteIn(task, TimeSpan.FromMilliseconds(500));
+            ConcurrentAssert.EnsureThatTaskIsNotCompletedIn(task, TimeSpan.FromMilliseconds(500));
 
             ct.Cancel();
 
