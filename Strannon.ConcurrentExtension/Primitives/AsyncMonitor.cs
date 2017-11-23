@@ -18,6 +18,21 @@ namespace Strannon.ConcurrentExtension.Primitives
             _are.Wait();
         }
 
+        public void Enter(TimeSpan timeout)
+        {
+            _are.Wait(timeout);
+        }
+
+        public void Enter(CancellationToken token)
+        {
+            _are.Wait(token);
+        }
+
+        public void Enter(TimeSpan timeout, CancellationToken token)
+        {
+            _are.Wait(timeout, token);
+        }
+
         public Task EnterAsync()
         {
             return _are.WaitAsync();
