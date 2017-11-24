@@ -7,14 +7,15 @@ namespace Strannon.ConcurrentTestExtension
     {
         public static void EnsureThatTaskIsNeverCompleted(Task task)
         {
-            EnsureThatTaskIsNotCompletedIn(task, TimeSpan.FromMilliseconds(1000));
+            EnsureThatTaskIsNotCompletedIn(task, TimeSpan.FromMilliseconds(1500));
         }
 
         public static void EnsureThatTaskIsNotCompletedIn(Task task, TimeSpan timeSpan)
         {
-            var firstTask = Task.WhenAny(task, Task.Delay(timeSpan)).Result;
+            var threadPoolTask = Task.Run(async () => await task);
+            var firstTask = Task.WhenAny(threadPoolTask, Task.Delay(timeSpan)).Result;
 
-            if (firstTask == task)
+            if (firstTask == threadPoolTask)
             {
                 throw new Exception("Neverending task is unexpectedly complited");
             }
@@ -22,7 +23,7 @@ namespace Strannon.ConcurrentTestExtension
 
         public static void EnsureThatActionIsNeverCompleted(Action action)
         {
-            EnsureThatActionIsNeverCompleted(action, TimeSpan.FromMilliseconds(1000));
+            EnsureThatActionIsNeverCompleted(action, TimeSpan.FromMilliseconds(1500));
         }
 
         public static void EnsureThatActionIsNeverCompleted(Action action, TimeSpan timeSpan)
@@ -38,14 +39,15 @@ namespace Strannon.ConcurrentTestExtension
 
         public static void EnsureThatTaskIsCompleted(Task task)
         {
-            EnsureThatTaskIsCompleted(task, TimeSpan.FromMilliseconds(1000));
+            EnsureThatTaskIsCompleted(task, TimeSpan.FromMilliseconds(1500));
         }
 
         public static void EnsureThatTaskIsCompleted(Task task, TimeSpan timeSpan)
         {
-            var firstTask = Task.WhenAny(task, Task.Delay(timeSpan)).Result;
+            var threadPoolTask = Task.Run(async () => await task);
+            var firstTask = Task.WhenAny(threadPoolTask, Task.Delay(timeSpan)).Result;
 
-            if (firstTask != task)
+            if (firstTask != threadPoolTask)
             {
                 throw new Exception("Task isn't complited in required time");
             }
@@ -53,7 +55,7 @@ namespace Strannon.ConcurrentTestExtension
 
         public static void EnsureThatActionIsCompleted(Action action)
         {
-            EnsureThatActionIsCompleted(action, TimeSpan.FromMilliseconds(1000));
+            EnsureThatActionIsCompleted(action, TimeSpan.FromMilliseconds(1500));
         }
 
         public static void EnsureThatActionIsCompleted(Action action, TimeSpan timeSpan)
