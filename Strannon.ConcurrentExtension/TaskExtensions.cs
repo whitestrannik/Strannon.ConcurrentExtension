@@ -22,7 +22,7 @@ namespace Strannon.ConcurrentExtension
         {
             using (token.Register(() => tcs.TrySetCanceled()))
             {
-                await tcs.Task.WaitWithTimeoutAsync(timeout);
+                await tcs.Task.WaitWithTimeoutAsync(timeout).ConfigureAwait(false);
             }
         }
 

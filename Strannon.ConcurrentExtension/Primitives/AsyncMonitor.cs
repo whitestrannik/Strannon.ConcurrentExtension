@@ -11,6 +11,7 @@ namespace Strannon.ConcurrentExtension.Primitives
         public AsyncMonitor()
         {
             _are = new AsyncAutoResetEvent();
+            _are.Set();
         }
 
         public void Enter()
