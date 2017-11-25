@@ -4,12 +4,11 @@ using System.Threading.Tasks;
 
 namespace Strannon.ConcurrentExtension.Primitives
 {
-    public sealed class AsyncBarrier
+    public sealed class AsyncBarrier : SynchronizationPrimitive<AsyncAutoResetEvent>
     {
         private readonly int _initialClientsCount;
         private volatile int _clientsCount;
         private volatile TaskCompletionSource<object> _tcs;
-        private readonly TimeSpan _eternityTimeSpan;
 
         public AsyncBarrier(int clientsCount)
         {
@@ -20,12 +19,13 @@ namespace Strannon.ConcurrentExtension.Primitives
 
             _initialClientsCount = _clientsCount = clientsCount;
             _tcs = TaskHelper.CreateTaskCompletitionSource();
-            _eternityTimeSpan = TimeSpan.FromMilliseconds(-1);
         }
+
+        public override bool IsSignaled => false;
 
         public Task SignalAndWaitAsync()
         {
-            return SignalAndWaitAsync(_eternityTimeSpan, CancellationToken.None);
+            return SignalAndWaitAsync(Consts.EternityTimeSpan, CancellationToken.None);
         }
 
         public Task SignalAndWaitAsync(TimeSpan timeout)
@@ -35,7 +35,7 @@ namespace Strannon.ConcurrentExtension.Primitives
 
         public Task SignalAndWaitAsync(CancellationToken token)
         {
-            return SignalAndWaitAsync(_eternityTimeSpan, token);
+            return SignalAndWaitAsync(Consts.EternityTimeSpan, token);
         }
 
         public Task SignalAndWaitAsync(TimeSpan timeout, CancellationToken token)

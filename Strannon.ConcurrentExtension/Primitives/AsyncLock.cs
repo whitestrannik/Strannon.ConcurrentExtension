@@ -4,16 +4,16 @@ using System.Threading.Tasks;
 
 namespace Strannon.ConcurrentExtension.Primitives
 {
-    public sealed class AsyncLock
+    public sealed class AsyncLock : SynchronizationPrimitive<AsyncAutoResetEvent>
     {
         private readonly AsyncMonitor _am;
-        private readonly TimeSpan _eternityTimeSpan;
 
         public AsyncLock()
         {
             _am = new AsyncMonitor();
-            _eternityTimeSpan = TimeSpan.FromMilliseconds(-1);
         }
+
+        public override bool IsSignaled => _am.IsSignaled;
 
         public IDisposable Lock()
         {
@@ -41,7 +41,7 @@ namespace Strannon.ConcurrentExtension.Primitives
 
         public Task<IDisposable> LockAsync()
         {
-            return LockAsync(_eternityTimeSpan, CancellationToken.None);
+            return LockAsync(Consts.EternityTimeSpan, CancellationToken.None);
         }
 
         public Task<IDisposable> LockAsync(TimeSpan timeout)
@@ -51,7 +51,7 @@ namespace Strannon.ConcurrentExtension.Primitives
 
         public Task<IDisposable> LockAsync(CancellationToken token)
         {
-            return LockAsync(_eternityTimeSpan, token);
+            return LockAsync(Consts.EternityTimeSpan, token);
         }
 
         public Task<IDisposable> LockAsync(TimeSpan timeout, CancellationToken token)

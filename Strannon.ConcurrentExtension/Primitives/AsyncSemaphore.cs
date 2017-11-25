@@ -5,10 +5,9 @@ using System.Threading.Tasks;
 
 namespace Strannon.ConcurrentExtension.Primitives
 {
-    public sealed class AsyncSemaphore
+    public sealed class AsyncSemaphore : SynchronizationPrimitive<AsyncAutoResetEvent>
     {
         private readonly int _maxClientsCount;
-        private readonly TimeSpan _eternityTimeSpan;
         private readonly object _lock;
         private readonly Queue<TaskCompletionSource<object>> _waitingClientsQueue;
         private int _clientsCount;
@@ -20,12 +19,13 @@ namespace Strannon.ConcurrentExtension.Primitives
                 throw new ArgumentOutOfRangeException("clientsCount can not be less or equal to zero.");
             }
 
-            _eternityTimeSpan = TimeSpan.FromMilliseconds(-1);
             _maxClientsCount = maxClientsCount;
             _clientsCount = 0;
             _lock = new object();
             _waitingClientsQueue = new Queue<TaskCompletionSource<object>>();
         }
+
+        public override bool IsSignaled => Interlocked.CompareExchange(ref _clientsCount, 0, 0) < _maxClientsCount;
 
         public void Wait()
         {
@@ -49,7 +49,7 @@ namespace Strannon.ConcurrentExtension.Primitives
 
         public Task WaitAsync()
         {
-            return WaitAsync(_eternityTimeSpan, CancellationToken.None);
+            return WaitAsync(Consts.EternityTimeSpan, CancellationToken.None);
         }
 
         public Task WaitAsync(TimeSpan timeOut)
@@ -59,7 +59,7 @@ namespace Strannon.ConcurrentExtension.Primitives
 
         public Task WaitAsync(CancellationToken token)
         {
-            return WaitAsync(_eternityTimeSpan, token);
+            return WaitAsync(Consts.EternityTimeSpan, token);
         }
 
         public Task WaitAsync(TimeSpan timeout, CancellationToken token)
@@ -69,7 +69,7 @@ namespace Strannon.ConcurrentExtension.Primitives
                 _clientsCount++;
                 if (_clientsCount > _maxClientsCount)
                 {
-                    var tcs = TaskHelper.CreateTaskCompletitionSource();
+                    var tcs = TaskHelper.CreateTaskCompletitionSourceWithAsyncContinuation();
                     _waitingClientsQueue.Enqueue(tcs);
                     return tcs.WaitWithTimeoutAndCancelAsync(timeout, token);
                 }

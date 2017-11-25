@@ -4,16 +4,16 @@ using System.Threading.Tasks;
 
 namespace Strannon.ConcurrentExtension.Primitives
 {
-    public sealed class AsyncManualResetEvent
+    public sealed class AsyncManualResetEvent : SynchronizationPrimitive<AsyncAutoResetEvent>
     {
-        private readonly TimeSpan _eternityTimeSpan;
         private volatile TaskCompletionSource<object> _tcs;
 
         public AsyncManualResetEvent()
         {
-            _eternityTimeSpan = TimeSpan.FromMilliseconds(-1);
             _tcs = TaskHelper.CreateTaskCompletitionSourceWithAsyncContinuation();
         }
+
+        public override bool IsSignaled => _tcs.Task.IsCompleted;
 
         public void Wait()
         {
@@ -37,7 +37,7 @@ namespace Strannon.ConcurrentExtension.Primitives
 
         public Task WaitAsync()
         {
-            return WaitAsync(_eternityTimeSpan, CancellationToken.None);
+            return WaitAsync(Consts.EternityTimeSpan, CancellationToken.None);
         }
 
         public Task WaitAsync(TimeSpan timeout)
@@ -47,7 +47,7 @@ namespace Strannon.ConcurrentExtension.Primitives
 
         public Task WaitAsync(CancellationToken token)
         {
-            return WaitAsync(_eternityTimeSpan, token);
+            return WaitAsync(Consts.EternityTimeSpan, token);
         }
 
         public Task WaitAsync(TimeSpan timeOut, CancellationToken token)

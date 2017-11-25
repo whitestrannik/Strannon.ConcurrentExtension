@@ -1,0 +1,2 @@
+- added overloads for AsyncCountDown.Wait methods;
+- added tests for AsyncCountDown for cases when it becomes NonSignaled after counter reached limit;

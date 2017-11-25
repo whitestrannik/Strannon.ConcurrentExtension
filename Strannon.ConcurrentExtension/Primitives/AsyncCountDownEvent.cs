@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Strannon.ConcurrentExtension.Primitives
 {
-    public sealed class AsyncCountDownEvent
+    public sealed class AsyncCountDownEvent : SynchronizationPrimitive<AsyncAutoResetEvent>
     {
         private readonly int _initialCountDown;
         private readonly AsyncManualResetEvent _event;
@@ -21,9 +21,26 @@ namespace Strannon.ConcurrentExtension.Primitives
             _event = new AsyncManualResetEvent();
         }
 
+        public override bool IsSignaled => false;
+
         public void Wait()
         {
             _event.Wait();
+        }
+
+        public void Wait(TimeSpan timeOut)
+        {
+            _event.Wait(timeOut);
+        }
+
+        public void Wait(CancellationToken token)
+        {
+            _event.Wait(token);
+        }
+
+        public void Wait(TimeSpan timeOut, CancellationToken token)
+        {
+            _event.Wait(timeOut, token);
         }
 
         public Task WaitAsync()

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Strannon.ConcurrentExtension.Primitives
 {
-    public sealed class AsyncMonitor
+    public sealed class AsyncMonitor : SynchronizationPrimitive<AsyncAutoResetEvent>
     {
         private readonly AsyncAutoResetEvent _are;
 
@@ -13,6 +13,8 @@ namespace Strannon.ConcurrentExtension.Primitives
             _are = new AsyncAutoResetEvent();
             _are.Set();
         }
+
+        public override bool IsSignaled => _are.IsSignaled;
 
         public void Enter()
         {
