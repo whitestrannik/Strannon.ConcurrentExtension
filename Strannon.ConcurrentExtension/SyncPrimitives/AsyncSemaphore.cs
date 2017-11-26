@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Strannon.ConcurrentExtension.Primitives
+namespace Strannon.ConcurrentExtension.SyncPrimitives
 {
     public sealed class AsyncSemaphore : SynchronizationPrimitive<AsyncAutoResetEvent>
     {

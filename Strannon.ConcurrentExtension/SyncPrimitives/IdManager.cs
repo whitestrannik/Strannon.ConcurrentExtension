@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 
-namespace Strannon.ConcurrentExtension.Primitives
+namespace Strannon.ConcurrentExtension.SyncPrimitives
 {
     internal static class IdManager<T>
     {

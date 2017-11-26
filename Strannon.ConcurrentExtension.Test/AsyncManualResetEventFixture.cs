@@ -1,5 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Strannon.ConcurrentExtension.Primitives;
+using Strannon.ConcurrentExtension.SyncPrimitives;
 using Strannon.ConcurrentTestExtension;
 using System;
 using System.Threading;

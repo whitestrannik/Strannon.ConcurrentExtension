@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Strannon.ConcurrentExtension.Primitives
+namespace Strannon.ConcurrentExtension.SyncPrimitives
 {
     public sealed class AsyncCountDownEvent : SynchronizationPrimitive<AsyncAutoResetEvent>
     {

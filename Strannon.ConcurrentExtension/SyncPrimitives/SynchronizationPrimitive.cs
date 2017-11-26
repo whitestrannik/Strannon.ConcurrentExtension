@@ -1,4 +1,4 @@
-﻿namespace Strannon.ConcurrentExtension.Primitives
+﻿namespace Strannon.ConcurrentExtension.SyncPrimitives
 {
     public abstract class SynchronizationPrimitive<T> where T : SynchronizationPrimitive<T>
     {
