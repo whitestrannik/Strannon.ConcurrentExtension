@@ -56,7 +56,7 @@ namespace Strannon.ConcurrentExtension.Primitives
 
         public Task<IDisposable> LockAsync(TimeSpan timeout, CancellationToken token)
         {
-            var tcs = TaskHelper.CreateTaskCompletitionSourceWithAsyncContinuation<IDisposable>();
+            var tcs = new AsyncTaskCompletionSource<IDisposable>();
 
             _am.EnterAsync(timeout, token).ContinueWith(t =>
             {

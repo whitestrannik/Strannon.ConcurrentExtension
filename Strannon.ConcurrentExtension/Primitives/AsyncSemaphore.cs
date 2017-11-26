@@ -9,7 +9,7 @@ namespace Strannon.ConcurrentExtension.Primitives
     {
         private readonly int _maxClientsCount;
         private readonly object _lock;
-        private readonly Queue<TaskCompletionSource<object>> _waitingClientsQueue;
+        private readonly Queue<AsyncTaskCompletionSource> _waitingClientsQueue;
         private int _clientsCount;
 
         public AsyncSemaphore(int maxClientsCount)
@@ -22,7 +22,7 @@ namespace Strannon.ConcurrentExtension.Primitives
             _maxClientsCount = maxClientsCount;
             _clientsCount = 0;
             _lock = new object();
-            _waitingClientsQueue = new Queue<TaskCompletionSource<object>>();
+            _waitingClientsQueue = new Queue<AsyncTaskCompletionSource>();
         }
 
         public override bool IsSignaled => Interlocked.CompareExchange(ref _clientsCount, 0, 0) < _maxClientsCount;
@@ -69,7 +69,7 @@ namespace Strannon.ConcurrentExtension.Primitives
                 _clientsCount++;
                 if (_clientsCount > _maxClientsCount)
                 {
-                    var tcs = TaskHelper.CreateTaskCompletitionSourceWithAsyncContinuation();
+                    var tcs = new AsyncTaskCompletionSource();
                     _waitingClientsQueue.Enqueue(tcs);
                     return tcs.WaitWithTimeoutAndCancelAsync(timeout, token);
                 }
@@ -93,14 +93,14 @@ namespace Strannon.ConcurrentExtension.Primitives
                 var waitingClient = GetWaitingClientFromQueue();
                 if (waitingClient != null)
                 {
-                    waitingClient.SetResult(null);
+                    waitingClient.SetResult();
                 }
             }
         }
 
-        private TaskCompletionSource<object> GetWaitingClientFromQueue()
+        private AsyncTaskCompletionSource GetWaitingClientFromQueue()
         {
-            TaskCompletionSource<object> tcs = null;
+            AsyncTaskCompletionSource tcs = null;
 
             while (_waitingClientsQueue.TryDequeue(out tcs))
             {

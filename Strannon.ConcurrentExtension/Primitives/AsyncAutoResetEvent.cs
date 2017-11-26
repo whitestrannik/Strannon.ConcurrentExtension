@@ -7,14 +7,14 @@ namespace Strannon.ConcurrentExtension.Primitives
 {
     public sealed class AsyncAutoResetEvent : SynchronizationPrimitive<AsyncAutoResetEvent>
     {
-        private readonly Queue<TaskCompletionSource<object>> _waitingClientsQueue;
+        private readonly Queue<AsyncTaskCompletionSource> _waitingClientsQueue;
         private readonly object _lock;
         private bool _isSignalState;
 
         public AsyncAutoResetEvent()
         {
             _lock = new object();
-            _waitingClientsQueue = new Queue<TaskCompletionSource<object>>();
+            _waitingClientsQueue = new Queue<AsyncTaskCompletionSource>();
         }
 
         public override bool IsSignaled => _isSignalState;
@@ -56,7 +56,7 @@ namespace Strannon.ConcurrentExtension.Primitives
 
         public Task WaitAsync(TimeSpan timeOut, CancellationToken token)
         {
-            TaskCompletionSource<object> tcs = null;
+            AsyncTaskCompletionSource tcs = null;
 
             lock (_lock)
             {
@@ -67,7 +67,7 @@ namespace Strannon.ConcurrentExtension.Primitives
                 }
                 else
                 {
-                    tcs = TaskHelper.CreateTaskCompletitionSourceWithAsyncContinuation();
+                    tcs = new AsyncTaskCompletionSource();
                     _waitingClientsQueue.Enqueue(tcs);
                     return tcs.WaitWithTimeoutAndCancelAsync(timeOut, token);
                 }
@@ -76,7 +76,7 @@ namespace Strannon.ConcurrentExtension.Primitives
 
         public void Set()
         {
-            TaskCompletionSource<object> tcs = null;
+            AsyncTaskCompletionSource tcs = null;
 
             lock (_lock)
             {
@@ -89,7 +89,7 @@ namespace Strannon.ConcurrentExtension.Primitives
                     }
                     else
                     {
-                        tcs.TrySetResult(null);
+                        tcs.TrySetResult();
                     }
                 }
             }
@@ -103,9 +103,9 @@ namespace Strannon.ConcurrentExtension.Primitives
             }
         }
 
-        private TaskCompletionSource<object> GetWaitingClientFromQueue()
+        private AsyncTaskCompletionSource GetWaitingClientFromQueue()
         {
-            TaskCompletionSource<object> tcs = null;
+            AsyncTaskCompletionSource tcs = null;
 
             while (_waitingClientsQueue.TryDequeue(out tcs))
             {

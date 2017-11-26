@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Strannon.ConcurrentExtension.Primitives;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,7 +21,15 @@ namespace Strannon.ConcurrentExtension
 
         public static async Task WaitWithTimeoutAndCancelAsync<T>(this TaskCompletionSource<T> tcs, TimeSpan timeout, CancellationToken token)
         {
-            using (token.Register(() => tcs.TrySetCanceled()))
+            using (token.Register(() => tcs.TrySetCanceled(token)))
+            {
+                await tcs.Task.WaitWithTimeoutAsync(timeout).ConfigureAwait(false);
+            }
+        }
+
+        public static async Task WaitWithTimeoutAndCancelAsync(this AsyncTaskCompletionSource tcs, TimeSpan timeout, CancellationToken token)
+        {
+            using (token.Register(() => tcs.TrySetCanceled(token)))
             {
                 await tcs.Task.WaitWithTimeoutAsync(timeout).ConfigureAwait(false);
             }

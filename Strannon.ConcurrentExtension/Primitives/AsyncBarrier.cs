@@ -8,7 +8,7 @@ namespace Strannon.ConcurrentExtension.Primitives
     {
         private readonly int _initialClientsCount;
         private volatile int _clientsCount;
-        private volatile TaskCompletionSource<object> _tcs;
+        private volatile AsyncTaskCompletionSource _tcs;
 
         public AsyncBarrier(int clientsCount)
         {
@@ -18,7 +18,7 @@ namespace Strannon.ConcurrentExtension.Primitives
             }
 
             _initialClientsCount = _clientsCount = clientsCount;
-            _tcs = TaskHelper.CreateTaskCompletitionSource();
+            _tcs = new AsyncTaskCompletionSource();
         }
 
         public override bool IsSignaled => false;
@@ -49,15 +49,15 @@ namespace Strannon.ConcurrentExtension.Primitives
             }
             else if (count == 0)
             {
-                _tcs = TaskHelper.CreateTaskCompletitionSourceWithAsyncContinuation();
+                _tcs = new AsyncTaskCompletionSource();
                 _clientsCount = _initialClientsCount;
-                tcs.SetResult(null);
+                tcs.SetResult();
                 return tcs.Task;
             }
             else
             {
-                var cancellableTcs = TaskHelper.CreateTaskCompletitionSourceWithAsyncContinuation();
-                tcs.Task.ContinueWith(t =>cancellableTcs.TrySetResult(null));
+                var cancellableTcs = new AsyncTaskCompletionSource();
+                tcs.Task.ContinueWith(t =>cancellableTcs.TrySetResult());
                 return cancellableTcs.WaitWithTimeoutAndCancelAsync(timeout, token);
             }
         }

@@ -6,11 +6,11 @@ namespace Strannon.ConcurrentExtension.Primitives
 {
     public sealed class AsyncManualResetEvent : SynchronizationPrimitive<AsyncAutoResetEvent>
     {
-        private volatile TaskCompletionSource<object> _tcs;
+        private volatile AsyncTaskCompletionSource _tcs;
 
         public AsyncManualResetEvent()
         {
-            _tcs = TaskHelper.CreateTaskCompletitionSourceWithAsyncContinuation();
+            _tcs = new AsyncTaskCompletionSource();
         }
 
         public override bool IsSignaled => _tcs.Task.IsCompleted;
@@ -52,22 +52,22 @@ namespace Strannon.ConcurrentExtension.Primitives
 
         public Task WaitAsync(TimeSpan timeOut, CancellationToken token)
         {
-            var tcs = TaskHelper.CreateTaskCompletitionSourceWithAsyncContinuation();
-            _tcs.Task.ContinueWith(t => tcs.TrySetResult(null));
+            var tcs = new AsyncTaskCompletionSource();
+            _tcs.Task.ContinueWith(t => tcs.TrySetResult());
 
             return tcs.WaitWithTimeoutAndCancelAsync(timeOut, token);
         }
 
         public void Set()
         {
-            _tcs.TrySetResult(null);
+            _tcs.TrySetResult();
         }
 
         public void Reset()
         {
             var tcs = _tcs;
 
-            while (tcs.Task.IsCompleted && Interlocked.CompareExchange(ref _tcs, TaskHelper.CreateTaskCompletitionSourceWithAsyncContinuation(), tcs) != tcs)
+            while (tcs.Task.IsCompleted && Interlocked.CompareExchange(ref _tcs, new AsyncTaskCompletionSource(), tcs) != tcs)
             {
                 tcs = _tcs;
             }
