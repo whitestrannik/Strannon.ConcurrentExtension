@@ -43,5 +43,16 @@ namespace Strannon.ConcurrentExtension
         {
            return task.GetAwaiter().GetResult();
         }
+
+        public static void WaitWithoutException(this Task task)
+        {
+            try
+            {
+                task.Wait();
+            }
+            catch (Exception)
+            {
+            }
+        }
     }
 }
