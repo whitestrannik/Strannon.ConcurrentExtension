@@ -5,20 +5,22 @@ using System.Threading.Tasks;
 
 namespace Strannon.ConcurrentExtension
 {
-    public sealed class DelegateLauncher : IDisposable
+    public sealed class SingleRunningDelegateLauncher : IDisposable
     {
-        private readonly BlockingCollection<DelegateData> _queue;
+        private readonly BlockingCollection<WorkItem> _queue;
+        private readonly CancellationTokenSource _cts;
         private readonly Task _task;
 
-        public DelegateLauncher()
+        public SingleRunningDelegateLauncher()
         {
-            _queue = new BlockingCollection<DelegateData>();
+            _queue = new BlockingCollection<WorkItem>();
+            _cts = new CancellationTokenSource();
             _task = Task.Run(() => RunConsumer());
         }
 
         private void RunConsumer()
         {
-            DelegateData runningDelegate = null;
+            WorkItem runningDelegate = null;
 
             foreach (var data in _queue.GetConsumingEnumerable())
             {
@@ -42,33 +44,43 @@ namespace Strannon.ConcurrentExtension
 
         public void Launch(Action<CancellationToken> action, Action<Task> onFinished)
         {
-            _queue.Add(new DelegateData(action, onFinished));
+            _queue.Add(new WorkItem(action, onFinished, _cts.Token));
+        }
+
+        public void Cancel()
+        {
+            _queue.Add(new WorkItem(c => { }, t => { }, CancellationToken.None));
         }
 
         public void Dispose()
         {
             _queue.CompleteAdding();
+            _cts.Cancel();
+            _cts.Dispose();
             _queue.Dispose();
             _task.Wait();
         }
 
-        private sealed class DelegateData
+        private sealed class WorkItem
         {
             private readonly Action<CancellationToken> _action;
             private readonly Action<Task> _onFinished;
             private CancellationTokenSource _cts;
+            private readonly CancellationToken _token;
             private Task _task;
+            
 
-            public DelegateData(Action<CancellationToken> action, Action<Task> onFinished)
+            public WorkItem(Action<CancellationToken> action, Action<Task> onFinished, CancellationToken token)
             {
                 _action = action;
                 _onFinished = onFinished;
+                _token = token;
             }
 
             internal void Run()
             {
-                _cts = new CancellationTokenSource();
-                _task = Task.Run(() => _action(_cts.Token));
+                _cts = CancellationTokenSource.CreateLinkedTokenSource(_token);
+                _task = Task.Run(() => _action(_cts.Token)).ContinueWith(task => _onFinished(task));
             }
 
             internal void CancelIfNotCompletedAndWait()
@@ -82,10 +94,9 @@ namespace Strannon.ConcurrentExtension
                 if (!_task.IsCompleted)
                 {
                     _cts.Cancel();
+                    _cts.Dispose();
                     _task.WaitWithoutException();
                 }
-
-                _onFinished(_task);
             }
         }
     }
