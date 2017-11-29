@@ -65,7 +65,7 @@ namespace Strannon.ConcurrentExtension
         {
             private readonly Action<CancellationToken> _action;
             private readonly Action<Task> _onFinished;
-            private CancellationTokenSource _cts;
+            private CancellationTokenSource _itemCts;
             private readonly CancellationToken _token;
             private Task _task;
             
@@ -79,22 +79,22 @@ namespace Strannon.ConcurrentExtension
 
             internal void Run()
             {
-                _cts = CancellationTokenSource.CreateLinkedTokenSource(_token);
-                _task = Task.Run(() => _action(_cts.Token)).ContinueWith(task => _onFinished(task));
+                _itemCts = CancellationTokenSource.CreateLinkedTokenSource(_token);
+                _task = Task.Run(() => _action(_itemCts.Token), _itemCts.Token).ContinueWith(task => _onFinished(task));
             }
 
             internal void CancelIfNotCompletedAndWait()
             {
                 if (_task == null)
                 {
-                    _onFinished(Task.FromCanceled(CancellationToken.None));
+                    _onFinished(null);
                     return;
                 }
 
                 if (!_task.IsCompleted)
                 {
-                    _cts.Cancel();
-                    _cts.Dispose();
+                    _itemCts.Cancel();
+                    _itemCts.Dispose();
                     _task.WaitWithoutException();
                 }
             }
